@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Product</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto max-w-2xl py-12 px-4">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8 text-center">Add Pre-Designed Product</h1>
+
+        <form id="add-product-form" class="bg-white p-8 rounded-lg shadow-md space-y-6">
+            
+            <div>
+                <label for="adminToken" class="block text-sm font-medium text-gray-700">Admin Auth Token (Bearer)</label>
+                <input type="text" name="adminToken" id="adminToken" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Paste your admin JWT here...">
+                <p class="mt-1 text-xs text-gray-500">Log in via Postman as an admin to get this token.</p>
+            </div>
+
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Product Name</label>
+                <input type="text" name="name" id="name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label for="price" class="block text-sm font-medium text-gray-700">Price</label>
+                <input type="number" name="price" id="price" step="0.01" min="0" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" id="description" rows="4" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+
+            <div>
+                <label for="images" class="block text-sm font-medium text-gray-700">Product Images (Multiple)</label>
+                <input type="file" name="images" id="images" accept="image/png, image/jpeg, image/webp" multiple required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            </div>
+            
+            <div>
+                <label for="stlFiles" class="block text-sm font-medium text-gray-700">Product .STL File(s) (Multiple)</label>
+                <input type="file" name="stlFiles" id="stlFiles" accept=".stl" multiple required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+            </div>
+
+            <div>
+                <button type="submit" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400">
+                    <span id="button-text">Add Product</span>
+                </button>
+            </div>
+        </form>
+
+        <div id="message" class="hidden mt-4 p-4 rounded-md"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('add-product-form');
+        const messageDiv = document.getElementById('message');
+        const submitButton = document.getElementById('submit-button');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            submitButton.disabled = true;
+            submitButton.querySelector('#button-text').textContent = 'Uploading...';
+            messageDiv.classList.add('hidden');
+            messageDiv.textContent = '';
+
+            const formData = new FormData(form);
+            const token = formData.get('adminToken');
+            
+            formData.delete('adminToken');
+            formData.append('type', 'Pre-designed');
+
+            try {
+                const response = await fetch('/api/products/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'An unknown error occurred.');
+                }
+                
+                messageDiv.textContent = 'Success! Product added: ' + data.product.name;
+                messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+                messageDiv.classList.add('bg-green-100', 'text-green-700');
+                form.reset();
+
+            } catch (error) {
+                messageDiv.textContent = `Error: ${error.message}`;
+                messageDiv.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+                messageDiv.classList.add('bg-red-100', 'text-red-700');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.querySelector('#button-text').textContent = 'Add Product';
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Custom Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #drop-zone {
+            border: 2px dashed #cbd5e1;
+            background-color: #f8fafc;
+        }
+        #drop-zone.drag-over {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+        }
+        #spinner {
+            display: none;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Upload Your STL files</h2>
+
+        <form id="upload-form" class="space-y-6">
+
+            <div>
+                <label for="stlFiles" class="block text-sm font-medium text-gray-700 mb-2">.STL Files</label>
+                <div id="drop-zone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md transition">
+                    <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8a4 4 0 01-4 4H28a4 4 0 01-4-4v-4m14-4l-3-3m-3 3l3-3m-3 3v12m6-12v12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                        <div class="flex text-sm text-gray-600">
+                            <label for="stlFiles" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                <span>Click to upload</span>
+                                <input id="stlFiles" name="stlFiles" type="file" class="sr-only" accept=".stl" multiple required>
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                        </div>
+                        <p class="text-xs text-gray-500">.STL files only, up to 100MB.</p>
+                    </div>
+                </div>
+                <div id="file-list" class="mt-2 text-sm text-gray-600"></div>
+            </div>
+
+            <div>
+                <label for="customLabel" class="block text-sm font-medium text-gray-700">Custom Label</label>
+                <input type="text" name="customLabel" id="customLabel" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="folder name">
+            </div>
+
+            <div>
+                <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+                <input type="number" name="quantity" id="quantity" value="1" min="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+
+            <div>
+                <button type="submit" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400">
+                    <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="button-text">Upload and Get Price</span>
+                </button>
+            </div>
+        </form>
+
+        <div id="success-message" class="hidden mt-4 p-4 bg-green-100 text-green-700 rounded-md">
+        </div>
+
+        <div id="error-message" class="hidden mt-4 p-4 bg-red-100 text-red-700 rounded-md">
+        </div>
+
+    </div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('stlFiles');
+        const fileListDiv = document.getElementById('file-list');
+        const submitButton = document.getElementById('submit-button');
+        const spinner = document.getElementById('spinner');
+        const buttonText = document.getElementById('button-text');
+        const successMessage = document.getElementById('success-message');
+        const errorMessage = document.getElementById('error-message');
+        const dropZone = document.getElementById('drop-zone');
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('drag-over');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            fileInput.files = e.dataTransfer.files;
+            updateFileList();
+        }, false);
+        
+        fileInput.addEventListener('change', updateFileList);
+
+        function updateFileList() {
+            fileListDiv.innerHTML = '';
+            if (!fileInput.files.length) {
+                fileListDiv.innerHTML = '<p>No files selected.</p>';
+                return;
+            }
+            const list = document.createElement('ul');
+            list.classList.add('list-disc', 'pl-5');
+            Array.from(fileInput.files).forEach(file => {
+                if (file.name.toLowerCase().endsWith('.stl')) {
+                    const item = document.createElement('li');
+                    item.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                    list.appendChild(item);
+                }
+            });
+            fileListDiv.appendChild(list);
+        }
+        
+        const getAuthHeaders = (isFormData = false) => {
+            const token = localStorage.getItem('authToken');
+            const headers = {};
+            
+            if (!isFormData) {
+                headers['Content-Type'] = 'application/json';
+            }
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            buttonText.textContent = 'Processing...';
+            spinner.style.display = 'inline-block';
+            submitButton.disabled = true;
+            successMessage.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+
+            const formData = new FormData(form);
+
+            try {
+                const uploadResponse = await fetch('/api/custom-designs/upload', {
+                    method: 'POST',
+                    headers: getAuthHeaders(true),
+                    body: formData
+                });
+
+                const uploadData = await uploadResponse.json();
+
+                if (!uploadResponse.ok) {
+                    throw new Error(uploadData.message || 'An unknown error occurred during upload.');
+                }
+                
+                buttonText.textContent = 'Adding to cart...';
+
+                const cartResponse = await fetch('/api/cart', {
+                    method: 'POST',
+                    headers: getAuthHeaders(false),
+                    body: JSON.stringify({
+                        productId: uploadData.product._id,
+                        quantity: uploadData.quantity
+                    })
+                });
+
+                const cartData = await cartResponse.json();
+                
+                if (!cartResponse.ok) {
+                    throw new Error(cartData.message || 'Product was created but failed to add to cart.');
+                }
+                
+                successMessage.innerHTML = `
+                    <h4 class="font-bold">Success!</h4>
+                    <p>Your custom product "${uploadData.product.name}" has been created and added to your cart.</p>
+                    <p class="mt-2 text-sm"><strong>Estimated Weight:</strong> ${uploadData.estimatedWeightGrams.toFixed(2)} g</p>
+                    <p class="text-sm"><strong>Estimated Price:</strong> $${uploadData.estimatedPrice.toFixed(2)}</p>
+                `;
+                successMessage.classList.remove('hidden');
+                form.reset();
+                fileListDiv.innerHTML = '';
+
+            } catch (error) {
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.classList.remove('hidden');
+            } finally {
+                buttonText.textContent = 'Upload and Get Price';
+                spinner.style.display = 'none';
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+

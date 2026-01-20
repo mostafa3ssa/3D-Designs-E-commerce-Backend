@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Shopping Cart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto max-w-4xl py-12 px-4">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Your Cart</h1>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            
+            <div id="cart-items-container" class="w-full lg:w-2/3 space-y-4">
+            </div>
+
+            <div class="w-full lg:w-1/3">
+                <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Order Summary</h2>
+                    <div class="flex justify-between text-gray-700">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal" class="font-medium">$0.00</span>
+                    </div>
+                    <div class="border-t border-gray-200 pt-4">
+                        <div class="flex justify-between text-xl font-bold text-gray-900">
+                            <span>Total</span>
+                            <span id="cart-total">$0.00</span>
+                        </div>
+                    </div>
+                    <button class="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition">
+                        Proceed to Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="message" class="hidden mt-4 p-4 rounded-md"></div>
+    </div>
+
+    <script>
+        const cartItemsContainer = document.getElementById('cart-items-container');
+        const cartSubtotalEl = document.getElementById('cart-subtotal');
+        const cartTotalEl = document.getElementById('cart-total');
+        const messageDiv = document.getElementById('message');
+
+        const showMessage = (message, isError = false) => {
+            messageDiv.textContent = message;
+            messageDiv.classList.remove('hidden');
+            if (isError) {
+                messageDiv.classList.add('bg-red-100', 'text-red-700');
+                messageDiv.classList.remove('bg-green-100', 'text-green-700');
+            } else {
+                messageDiv.classList.add('bg-green-100', 'text-green-700');
+                messageDiv.classList.remove('bg-red-100', 'text-red-700');
+            }
+        };
+
+        const renderCart = (cart) => {
+            cartItemsContainer.innerHTML = ''; 
+
+            if (!cart.items || cart.items.length === 0) {
+                cartItemsContainer.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                        <h2 class="text-xl font-semibold text-gray-700">Your cart is empty.</h2>
+                        <a href="/admin/products" class="text-blue-600 hover:underline mt-2 inline-block">Start shopping</a>
+                    </div>
+                `;
+                cartSubtotalEl.textContent = '$0.00';
+                cartTotalEl.textContent = '$0.00';
+                return;
+            }
+
+            cart.items.forEach(item => {
+                const product = item.productId;
+                if (!product) return; 
+
+                const isCustom = product.type === 'Custom';
+                
+                const imageUrl = isCustom 
+                    ? `https://placehold.co/100x100/e2e8f0/94a3b8?text=Custom+STL`
+                    : (product.imagesLinks && product.imagesLinks.length > 0 ? product.imagesLinks[0] : `https://placehold.co/100x100/e2e8f0/94a3b8?text=No+Image`);
+
+                const lineTotal = (item.quantity * product.price).toFixed(2);
+
+                const itemHtml = `
+                    <div class="bg-white p-4 rounded-lg shadow-md flex gap-4 product-item" data-product-id="${product._id}">
+                        <img src="${imageUrl}" alt="${product.name}" class="w-24 h-24 rounded-md object-cover">
+                        <div class="flex-grow flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">${product.name}</h3>
+                                <p class="text-sm text-gray-500">${isCustom ? 'Custom Design' : 'Pre-designed'}</p>
+                                <p class="text-sm text-gray-700 font-medium">$${product.price.toFixed(2)} ea.</p>
+                            </div>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center gap-2">
+                                    <label for="quantity-${product._id}" class="text-sm font-medium text-gray-700">Qty:</label>
+                                    <input 
+                                        type="number" 
+                                        id="quantity-${product._id}"
+                                        class="quantity-input w-20 border-gray-300 rounded-md shadow-sm text-sm p-2"
+                                        value="${item.quantity}" 
+                                        min="1"
+                                        data-id="${product._id}"
+                                    >
+                                </div>
+                                <button class="remove-btn text-sm font-medium text-red-600 hover:text-red-800" data-id="${product._id}">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-semibold text-gray-900">$${lineTotal}</span>
+                        </div>
+                    </div>
+                `;
+                cartItemsContainer.innerHTML += itemHtml;
+            });
+
+            cartSubtotalEl.textContent = `$${cart.subtotal.toFixed(2)}`;
+            cartTotalEl.textContent = `$${cart.subtotal.toFixed(2)}`;
+        };
+
+        const getAuthHeaders = () => {
+            const token = localStorage.getItem('authToken');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        };
+
+        const fetchCart = async () => {
+            try {
+                const response = await fetch('/api/cart', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch cart.');
+                }
+                const result = await response.json();
+
+                console.log(result);
+
+                renderCart(result);
+            } catch (error) {
+                showMessage(error.message, true);
+                cartItemsContainer.innerHTML = '<p class="text-red-500">Could not load your cart.</p>';
+            }
+        };
+
+        cartItemsContainer.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('remove-btn')) {
+                const productId = e.target.dataset.id;
+
+                try {
+                    const response = await fetch(`/api/cart/${productId}`, { 
+                        method: 'DELETE',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Failed to remove item.');
+                    
+                    showMessage('Item removed from cart.');
+                    renderCart(data.cart); 
+                } catch (error) {
+                    showMessage(error.message, true);
+                }
+            }
+        });
+
+        cartItemsContainer.addEventListener('change', async (e) => {
+            if (e.target.classList.contains('quantity-input')) {
+                const productId = e.target.dataset.id;
+                const quantity = parseInt(e.target.value, 10);
+
+                if (quantity < 1) {
+                    e.target.value = 1;
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/cart/update', {
+                        method: 'PUT',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify({ productId, quantity })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Failed to update quantity.');
+
+                    showMessage('Cart updated.');
+                    renderCart(data.cart);
+                } catch (error) {
+                    showMessage(error.message, true);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', fetchCart);
+    </script>
+</body>
+</html>
+

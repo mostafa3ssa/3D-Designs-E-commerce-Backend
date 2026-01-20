@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Your Profile</h2>
+
+        <div id="profile-details" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-500">First Name</label>
+                <p id="firstName" class="mt-1 text-lg font-semibold text-gray-900">Loading...</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Last Name</label>
+                <p id="lastName" class="mt-1 text-lg font-semibold text-gray-900">Loading...</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Email</label>
+                <p id="email" class="mt-1 text-lg font-semibold text-gray-900">Loading...</p>
+            </div>
+        </div>
+
+        <button id="logout-button" class="mt-8 w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-400">
+            Log Out
+        </button>
+
+        <div id="message" class="hidden mt-4 p-4 rounded-md"></div>
+    </div>
+
+    <script>
+        const firstNameEl = document.getElementById('firstName');
+        const lastNameEl = document.getElementById('lastName');
+        const emailEl = document.getElementById('email');
+        const logoutButton = document.getElementById('logout-button');
+        const messageDiv = document.getElementById('message');
+
+        const getAuthHeaders = () => {
+            const token = localStorage.getItem('authToken');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        };
+
+        const showMessage = (message, isError = false) => {
+            messageDiv.textContent = message;
+            messageDiv.classList.remove('hidden');
+            if (isError) {
+                messageDiv.classList.add('bg-red-100', 'text-red-700');
+                messageDiv.classList.remove('bg-green-100', 'text-green-700');
+            } else {
+                messageDiv.classList.add('bg-green-100', 'text-green-700');
+                messageDiv.classList.remove('bg-red-100', 'text-red-700');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const headers = getAuthHeaders();
+            if (!headers['Authorization']) {
+                window.location.href = '/login';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/user/me', {
+                    method: 'GET',
+                    headers: headers
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch profile.');
+                }
+
+                const user = await response.json();
+                firstNameEl.textContent = user.firstName;
+                lastNameEl.textContent = user.lastName;
+                emailEl.textContent = user.email;
+
+            } catch (error) {
+                showMessage(error.message, true);
+            }
+        });
+
+        logoutButton.addEventListener('click', async () => {
+            logoutButton.disabled = true;
+            logoutButton.textContent = 'Logging out...';
+
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Logout failed.');
+                
+                localStorage.removeItem('authToken');
+                
+                showMessage('Logout successful! Redirecting...');
+                window.setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1500);
+
+            } catch (error) {
+                showMessage(error.message, true);
+                logoutButton.disabled = false;
+                logoutButton.textContent = 'Log Out';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto max-w-6xl py-12 px-4">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8 text-center">Checkout</h1>
+
+        <div class="flex flex-col lg:flex-row-reverse gap-8">
+
+            <div class="w-full lg:w-1/3">
+                <div class="bg-white p-6 rounded-lg shadow-md space-y-4 sticky top-8">
+                    <h2 class="text-xl font-semibold text-gray-900">Your Order Summary</h2>
+                    <div id="order-summary-items" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                    </div>
+                    <div class="border-t border-gray-200 pt-4 space-y-2">
+                        <div class="flex justify-between text-gray-700">
+                            <span>Subtotal</span>
+                            <span id="cart-subtotal" class="font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-gray-700">
+                            <span>Shipping</span>
+                            <span id="cart-shipping" class="font-medium">Calculating...</span>
+                        </div>
+                        <div class="flex justify-between text-xl font-bold text-gray-900 pt-2">
+                            <span>Total</span>
+                            <span id="cart-total">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="w-full lg:w-2/3 bg-white p-8 rounded-lg shadow-md">
+                <form id="checkout-form" class="space-y-6">
+                    
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Contact Information</h2>
+                        <input type="email" id="email" name="email" placeholder="Email (for guest receipts)" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        <p id="user-info" class="hidden text-sm text-gray-600 mt-2">Logged in as: <span class="font-medium" id="user-email"></span></p>
+                    </div>
+
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Shipping Address</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="shippingFirstName" name="shippingFirstName" placeholder="First Name" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required>
+                            <input type="text" id="shippingLastName" name="shippingLastName" placeholder="Last Name" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required>
+                        </div>
+                        <input type="text" id="shippingAddress" name="shippingAddress" placeholder="Address" class="mt-4 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <input type="text" id="shippingCity" name="shippingCity" placeholder="City" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required>
+                            <input type="text" id="shippingPostalCode" name="shippingPostalCode" placeholder="Postal Code" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required>
+                            <input type="text" id="shippingCountry" name="shippingCountry" placeholder="Country Code (e.g., EG)" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="sameAsShipping" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Billing address is same as shipping</span>
+                        </label>
+                    </div>
+
+                    <div id="billing-address-form" class="hidden space-y-4">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Billing Address</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="billingFirstName" name="billingFirstName" placeholder="First Name" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                            <input type="text" id="billingLastName" name="billingLastName" placeholder="Last Name" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                        </div>
+                        <input type="text" id="billingAddress" name="billingAddress" placeholder="Address" class="mt-4 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <input type="text" id="billingCity" name="billingCity" placeholder="City" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                            <input type="text" id="billingPostalCode" name="billingPostalCode" placeholder="Postal Code" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                            <input type="text" id="billingCountry" name="billingCountry" placeholder="Country Code (e.g., EG)" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                        </div>
+                    </div>
+
+                    <div id="message" class="hidden mt-4 p-4 rounded-md"></div>
+
+                    <button type="submit" id="place-order-button" class="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition disabled:bg-gray-400">
+                        Place Order & Proceed to Payment
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const cartItemsContainer = document.getElementById('order-summary-items');
+        const cartSubtotalEl = document.getElementById('cart-subtotal');
+        const cartShippingEl = document.getElementById('cart-shipping');
+        const cartTotalEl = document.getElementById('cart-total');
+        const messageDiv = document.getElementById('message');
+        const form = document.getElementById('checkout-form');
+        const placeOrderButton = document.getElementById('place-order-button');
+        
+        const emailInput = document.getElementById('email');
+        const userInfoEl = document.getElementById('user-info');
+        const userEmailEl = document.getElementById('user-email');
+
+        const sameAsShippingCheck = document.getElementById('sameAsShipping');
+        const billingForm = document.getElementById('billing-address-form');
+
+        const getAuthHeaders = (token) => {
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        };
+
+        const showMessage = (message, isError = false) => {
+            messageDiv.textContent = message;
+            messageDiv.classList.remove('hidden');
+            if (isError) {
+                messageDiv.classList.add('bg-red-100', 'text-red-700');
+                messageDiv.classList.remove('bg-green-100', 'text-green-700');
+            } else {
+                messageDiv.classList.add('bg-green-100', 'text-green-700');
+                messageDiv.classList.remove('bg-red-100', 'text-red-700');
+            }
+        };
+
+        const populateCart = (cart) => {
+            cartItemsContainer.innerHTML = '';
+            if (!cart.items || cart.items.length === 0) {
+                cartItemsContainer.innerHTML = '<p class="text-gray-600">Your cart is empty.</p>';
+                placeOrderButton.disabled = true;
+                return;
+            }
+
+            cart.items.forEach(item => {
+                const product = item.productId;
+                if (!product) return;
+                
+                const itemHtml = `
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="font-medium text-gray-800">${product.name} (x${item.quantity})</span>
+                        <span class="text-gray-600">$${(product.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                `;
+                cartItemsContainer.innerHTML += itemHtml;
+            });
+            
+            cartSubtotalEl.textContent = `$${cart.subtotal.toFixed(2)}`;
+            cartTotalEl.textContent = `$${cart.subtotal.toFixed(2)}`;
+            cartShippingEl.textContent = 'Free (Demo)';
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch('/api/cart', {
+                    method: 'GET',
+                    headers: getAuthHeaders(token)
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Failed to fetch cart');
+                populateCart(data.cart);
+                
+                if (token) {
+                    const userResponse = await fetch('/api/profile/me', {
+                        method: 'GET',
+                        headers: getAuthHeaders(token)
+                    });
+                    const userData = await userResponse.json();
+                    if(userResponse.ok) {
+                        emailInput.value = userData.email;
+                        emailInput.readOnly = true;
+                        userInfoEl.classList.remove('hidden');
+                        userEmailEl.textContent = userData.email;
+                    }
+                }
+
+            } catch (error) {
+                showMessage(error.message, true);
+                cartItemsContainer.innerHTML = '<p class="text-red-500">Could not load your cart.</p>';
+            }
+        });
+
+        sameAsShippingCheck.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                billingForm.classList.add('hidden');
+            } else {
+                billingForm.classList.remove('hidden');
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            placeOrderButton.disabled = true;
+            placeOrderButton.textContent = 'Processing...';
+            showMessage('', false);
+
+            const token = localStorage.getItem('authToken');
+            
+            const shippingAddress = {
+                firstName: form.shippingFirstName.value,
+                lastName: form.shippingLastName.value,
+                address: form.shippingAddress.value,
+                city: form.shippingCity.value,
+                postalCode: form.shippingPostalCode.value,
+                country: form.shippingCountry.value,
+            };
+
+            let billingAddress;
+            if (sameAsShippingCheck.checked) {
+                billingAddress = { ...shippingAddress };
+            } else {
+                billingAddress = {
+                    firstName: form.billingFirstName.value,
+                    lastName: form.billingLastName.value,
+                    address: form.billingAddress.value,
+                    city: form.billingCity.value,
+                    postalCode: form.billingPostalCode.value,
+                    country: form.billingCountry.value,
+                };
+            }
+
+            try {
+                const orderResponse = await fetch('/api/orders/create', {
+                    method: 'POST',
+                    headers: getAuthHeaders(token),
+                    body: JSON.stringify({
+                        shippingAddress,
+                        billingAddress,
+                        email: form.email.value
+                    })
+                });
+
+                const orderData = await orderResponse.json();
+                if (!orderResponse.ok) throw new Error(orderData.message || 'Failed to create order.');
+                
+                const orderId = orderData._id;
+                showMessage('Order created! Redirecting to payment...', false);
+
+                const paymentKeyResponse = await fetch('/api/checkout/paymob-key', {
+                    method: 'POST',
+                    headers: getAuthHeaders(token),
+                    body: JSON.stringify({ orderId })
+                });
+
+                const paymentData = await paymentKeyResponse.json();
+                if (!paymentKeyResponse.ok) {
+                    
+                    throw new Error(paymentData.message || 'Failed to get payment key.');
+                }
+                
+                window.location.href = paymentData.iframeUrl;
+
+            } catch (error) {
+                showMessage(error.message, true);
+                placeOrderButton.disabled = false;
+                placeOrderButton.textContent = 'Place Order & Proceed to Payment';
+            }
+        });
+    </script>
+</body>
+</html>
