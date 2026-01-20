@@ -1,3 +1,24 @@
+# 3D Printing E-commerce Backend (NOT COMPLETED)
+
+This is the backend API for the 3D Printing E-commerce application. It is built using the MERN stack (MongoDB, Express, React, Node.js) and provides a comprehensive set of endpoints for user authentication, product management, and custom design uploads.
+
+## Key Features
+
+- **Authentication**: Secure user registration, login, and password management with JWT and email verification.
+- **Product Management**: Admin tools for managing pre-designed 3D models, including image and STL file handling.
+- **Custom Designs**: Users can upload their own STL files for instant price estimation based on volume and material costs.
+- **Storage Integration**: Seamless integration with Cloudinary for images and Cloudflare R2 for large STL files.
+
+## Tech Stack
+
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB
+- **Storage**: Cloudinary, Cloudflare R2
+- **Authentication**: JWT, bcryptjs
+
+---
+
 # Auth API — /api/auth
 
 This document describes the authentication-related HTTP endpoints implemented in `backend/routes/auth.routes.js`.
